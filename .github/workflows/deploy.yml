@@ -1,0 +1,63 @@
+# Nom du workflow (affiché dans l’onglet GitHub Actions)
+name: Build Docker Image (Backend)
+
+# Déclencheur du workflow
+# Ici : le workflow se lance UNIQUEMENT quand on fait un push sur la branche main
+on:
+  push:
+    branches:
+      - main
+
+# Liste des jobs du workflow
+jobs:
+  # Nom du job (libre, ici "build")
+  build: # build pour le backend le nom est libre 
+    # GitHub va créer une VM Ubuntu temporaire pour exécuter ce job
+    # Cette VM contient déjà Docker, Git, etc.
+    runs-on: ubuntu-latest
+
+    # Liste des étapes exécutées dans la VM, dans l’ordre
+    steps:
+      # ─────────────────────────────────────────────
+      # 1) Cloner le repository dans la VM GitHub
+      # ─────────────────────────────────────────────
+      - name: Checkout repository
+        # Action officielle GitHub pour faire un "git clone"
+        uses: actions/checkout@v4 # checkout pour cloner le repository dans la VM GitHub  v4 pour la version 4 de l'action
+
+      # ─────────────────────────────────────────────
+      # 2) Se connecter à GitHub Container Registry (GHCR)
+      # ─────────────────────────────────────────────
+      - name: Login to GHCR
+        # Action officielle Docker pour faire "docker login"
+        uses: docker/login-action@v3
+        with:
+          # Registry cible : GitHub Container Registry
+          registry: ghcr.io
+          # Nom d’utilisateur GitHub (automatique)
+          username: ${{ github.actor }}
+          # Token automatique fourni par GitHub (pas besoin de mot de passe)
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ─────────────────────────────────────────────
+      # 3) Build de l’image Docker + Push vers GHCR
+      # ─────────────────────────────────────────────
+      - name: Build and push backend image
+        # run permet d’exécuter des commandes shell
+        run: |
+          # Tag unique basé sur le commit Git (traçable, pro)
+          IMAGE_SHA=${{ github.sha }}
+
+          # Build de l’image Docker à partir du Dockerfile
+          # "." = racine du repository
+          # Le nom de l’image détermine où elle sera stockée (GHCR)
+           docker build \
+           -t ghcr.io/confoline-farouk/backend:latest \
+           -t ghcr.io/confoline-farouk/backend:${IMAGE_SHA} \
+           . 
+
+          # Push de l’image vers GitHub Container Registry
+          # L’image sera visible dans :
+          # GitHub → Repo → Packages → backend 
+          docker push ghcr.io/confoline-farouk/backend:latest \
+          docker push ghcr.io/confoline-farouk/backend:${IMAGE_SHA} 
