@@ -59,5 +59,8 @@ jobs:
           # Push de l’image vers GitHub Container Registry
           # L’image sera visible dans :
           # GitHub → Repo → Packages → backend 
-          docker push ghcr.io/confoline-farouk/backend:latest \
-          docker push ghcr.io/confoline-farouk/backend:${IMAGE_SHA} 
+          # Push de l’image "latest"
+          docker push ghcr.io/confoline-farouk/backend:latest
+
+          # Push de l’image versionnée par commit
+          docker push ghcr.io/confoline-farouk/backend:${IMAGE_SHA}
