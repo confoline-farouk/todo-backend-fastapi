@@ -30,7 +30,7 @@ def get_db():
 
 @app.get("/")
 def read_root():
-    return {"message": "Todo API is running"}
+    return {"message": "Todo API is running ! By Farouk"}
 
 @app.get("/api/todos", response_model=List[schemas.Todo])
 def get_todos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

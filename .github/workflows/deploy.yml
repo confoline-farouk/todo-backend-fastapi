@@ -64,3 +64,41 @@ jobs:
 
           # Push de l’image versionnée par commit
           docker push ghcr.io/confoline-farouk/backend:${IMAGE_SHA}
+
+# ─────────────────────────────────────────────
+  # JOB 2 : DEPLOY SUR LE SERVEUR (CD)
+  # ─────────────────────────────────────────────
+  deploy:
+    # Ce job démarre UNIQUEMENT si le build a réussi
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Connexion SSH au serveur
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          script: |
+            echo "Pull nouvelle image"
+            docker pull ghcr.io/confoline-farouk/backend:latest
+
+            echo "Stop ancien container"
+            docker stop backend || true
+            docker rm backend || true
+
+            echo "Start nouveau container"
+            docker run -d \
+              --name backend \
+              --network app_network \
+              -p 8000:8000 \
+              -e DB_HOST=mysql \
+              -e DB_PORT=3306 \
+              -e DB_USER=todo_user \
+              -e DB_PASSWORD=todo_pass \
+              -e DB_NAME=todo_db \
+              ghcr.io/confoline-farouk/backend:latest
