@@ -98,7 +98,7 @@ jobs:
               -p 8000:8000 \
               -e DB_HOST=mysql \
               -e DB_PORT=3306 \
-              -e DB_USER=todo_user \
-              -e DB_PASSWORD=todo_pass \
+              -e DB_USER=root \
+              -e DB_PASSWORD=rootpass \
               -e DB_NAME=todo_db \
               ghcr.io/confoline-farouk/backend:latest
