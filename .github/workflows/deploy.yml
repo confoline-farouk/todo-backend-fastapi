@@ -96,9 +96,9 @@ jobs:
               --name backend \
               --network app_network \
               -p 8000:8000 \
-              -e DB_HOST=mysql \
-              -e DB_PORT=3306 \
-              -e DB_USER=root \
-              -e DB_PASSWORD=rootpass \
-              -e DB_NAME=todo_db \
+              -e MYSQL_HOST=mysql \
+              -e MYSQL_PORT=3306 \
+              -e MYSQL_USER=root \
+              -e MYSQL_PASSWORD=rootpass \
+              -e MYSQL_DATABASE=todo_db \
               ghcr.io/confoline-farouk/backend:latest
