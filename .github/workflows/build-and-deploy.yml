@@ -1,0 +1,53 @@
+name: Backend - Build & Push (GHCR)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        run: |
+          IMAGE_SHA=${{ github.sha }}
+          docker build -t ghcr.io/${{ github.repository_owner }}/backend:${IMAGE_SHA} .
+          docker push ghcr.io/${{ github.repository_owner }}/backend:${IMAGE_SHA}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            IMAGE_SHA=${{ github.sha }}
+            docker pull ghcr.io/${{ github.repository_owner }}/backend:${IMAGE_SHA}
+            docker stop backend || true
+            docker rm backend || true
+            docker run -d \
+              --name backend \
+              --network app_network \
+              -p 8000:8000 \
+              -e MYSQL_HOST=mysql \
+              -e MYSQL_PORT=3306 \
+              -e MYSQL_USER=root \
+              -e MYSQL_PASSWORD=rootpass \
+              -e MYSQL_DATABASE=todo_db \
+              ghcr.io/${{ github.repository_owner }}/backend:${IMAGE_SHA}
