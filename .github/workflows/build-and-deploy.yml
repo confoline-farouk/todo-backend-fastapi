@@ -37,6 +37,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            OLD_IMAGE=$(docker inspect backend --format '{{.Image}}' 2>/dev/null || true)
             IMAGE_SHA=${{ github.sha }}
             docker pull ghcr.io/${{ github.repository_owner }}/backend:${IMAGE_SHA}
             docker stop backend || true
@@ -51,3 +52,4 @@ jobs:
               -e MYSQL_PASSWORD=rootpass \
               -e MYSQL_DATABASE=todo_db \
               ghcr.io/${{ github.repository_owner }}/backend:${IMAGE_SHA}
+            if [ -n "$OLD_IMAGE" ]; then docker rmi $OLD_IMAGE || true; fi
